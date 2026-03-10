@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>許穎詩猜數字遊戲 0-100</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background: #ffb6c1; /* 粉紅色背景 */
+        color: #fff;
+        font-size: 200%; /* 全部字放大一倍 */
+    }
+
+    input, button {
+        font-size: 150%; /* 輸入框與按鈕也放大 */
+        padding: 10px 20px;
+        margin: 10px;
+        border-radius: 10px;
+        border: none;
+    }
+
+    button {
+        background: #ff69b4;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #ff1493;
+    }
+
+    #history {
+        font-size: 180%; /* 歷史紀錄更大 */
+        color: #fffacd; /* 柔和黃色 */
+    }
+
+    #fireworksCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        display: none;
+    }
+</style>
+</head>
+<body>
+
+<h1>許穎詩的猜數字遊戲 0-100</h1>
+<p>系統已經隨機選咗一個 0-100 嘅數字，試下估中佢！</p>
+
+<input type="number" id="guessInput" placeholder="輸入數字">
+<button onclick="checkGuess()">送出</button>
+<button onclick="resetGame()">重新開始</button>
+
+<p id="message"></p>
+
+<p>你估過的數字：</p>
+<div id="history" style="margin:10px; font-size:20px; color:#0f0;"></div>
+
+<canvas id="fireworksCanvas"></canvas>
+
+<script>
+// ===== 遊戲邏輯 =====
+let answer = Math.floor(Math.random() * 101);
+let count = 0;
+let history = []; // 新增：歷史紀錄
+
+document.getElementById("guessInput").addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+        checkGuess();
+    }
+});
+
+function checkGuess() {
+    const input = document.getElementById("guessInput");
+    const guess = Number(input.value);
+    const msg = document.getElementById("message");
+
+    if (guess < 0 || guess > 100) {
+        msg.textContent = "範圍係 0-100 呀～";
+        input.value = "";
+        input.focus();
+        return;
+    }
+
+    count++;
+
+    // 新增：加入歷史紀錄
+    history.push(guess);
+    document.getElementById("history").textContent = history.join("， ");
+
+    if (guess < answer) {
+        msg.textContent = "太細喇，再大啲。";
+    } else if (guess > answer) {
+        msg.textContent = "太大喇，再細啲。";
+    } else {
+        msg.textContent = `BINGO！你總共估咗 ${count} 次！`;
+        startFireworks();
+    }
+
+    input.value = "";
+    input.focus();
+}
+
+// ===== 重新開始 =====
+function resetGame() {
+    answer = Math.floor(Math.random() * 101);
+    count = 0;
+    history = []; // 清空歷史
+    document.getElementById("history").textContent = "";
+    document.getElementById("message").textContent = "新遊戲開始！請輸入 0-100。";
+    document.getElementById("guessInput").value = "";
+    document.getElementById("guessInput").focus();
+}
+
+// ===== 煙花特效 =====
+const canvas = document.getElementById("fireworksCanvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.onresize = resizeCanvas;
+
+let fireworks = [];
+
+function startFireworks() {
+    canvas.style.display = "block";
+    for (let i = 0; i < 15; i++) {
+        fireworks.push(new Firework());
+    }
+    animate();
+}
+
+class Firework {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height;
+        this.targetY = Math.random() * canvas.height * 0.5;
+        this.speed = 5;
+        this.exploded = false;
+        this.particles = [];
+    }
+
+    update() {
+        if (!this.exploded) {
+            this.y -= this.speed;
+            if (this.y <= this.targetY) {
+                this.exploded = true;
+                this.explode();
+            }
+        } else {
+            this.particles.forEach(p => p.update());
+        }
+    }
+
+    explode() {
+        for (let i = 0; i < 40; i++) {
+            this.particles.push(new Particle(this.x, this.y));
+        }
+    }
+
+    draw() {
+        if (!this.exploded) {
+            ctx.fillStyle = "white";
+            ctx.fillRect(this.x, this.y, 3, 3);
+        } else {
+            this.particles.forEach(p => p.draw());
+        }
+    }
+}
+
+class Particle {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.angle = Math.random() * Math.PI * 2;
+        this.speed = Math.random() * 4 + 1;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.01;
+        this.color = `hsl(${Math.random() * 360}, 100%, 60%)`;
+    }
+
+    update() {
+        this.x += Math.cos(this.angle) * this.speed;
+        this.y += Math.sin(this.angle) * this.speed;
+        this.alpha -= this.decay;
+    }
+
+    draw() {
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, 3, 3);
+        ctx.globalAlpha = 1;
+    }
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    fireworks = fireworks.filter(f => {
+        f.update();
+        f.draw();
+        return !f.exploded || f.particles.some(p => p.alpha > 0);
+    });
+
+    if (fireworks.length > 0) {
+        requestAnimationFrame(animate);
+    } else {
+        canvas.style.display = "none";
+    }
+}
+</script>
+
+</body>
+</html>

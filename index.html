@@ -49,6 +49,26 @@
 <body>
 
 <h1>許穎詩的猜數字遊戲 0-100</h1>
+<!-- 🐹 動態倉鼠公仔 -->
+<div id="hamster">
+    <img src="https://i.imgur.com/8QfQ2Qp.gif" alt="hamster" width="150">
+</div>
+
+<style>
+#hamster {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0px); }
+}
+</style>
+
 <p>系統已經隨機選咗一個 0-100 嘅數字，試下估中佢！</p>
 
 <input type="number" id="guessInput" placeholder="輸入數字">
